@@ -25,197 +25,206 @@ import org.apache.hadoop.hbase.filter.SubstringComparator;
 import org.apache.hadoop.hbase.filter.ValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.filter.LongComparator;
+import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.filter.RowFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 
 public class QueryCurrentWithdrawableEvents {
 
-    private static final String HBASE_CONFIGURATION_ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
-    private static final String HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
-    private static final String HBASE_CONFIGURATION_CLIENT_SCANNER_CACHING = "hbase.client.scanner.caching";
-    private static final String HBASE_CONFIGURATION_RPC_TIMEOUT = "hbase.rpc.timeout";
+	private static final String HBASE_CONFIGURATION_ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
+	private static final String HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
+	private static final String HBASE_CONFIGURATION_CLIENT_SCANNER_CACHING = "hbase.client.scanner.caching";
+	private static final String HBASE_CONFIGURATION_RPC_TIMEOUT = "hbase.rpc.timeout";
 
-    private static final String hbaseZookeeeperHost = "localhost";
-    private static final String hbaseZookeeeperPort = "2181";
-    private static final String hbaseClientScannerCaching = "1000";
-    private static final String hbaseRPCTimeout = "60000"; // 60 seconds
+	private static final String hbaseZookeeeperHost = "localhost";
+	private static final String hbaseZookeeeperPort = "2181";
+	private static final String hbaseClientScannerCaching = "1000";
+	private static final String hbaseRPCTimeout = "60000"; // 60 seconds
 
-    private static final String tablename = "currentwithdrawable";
+	private static final String tablename = "currentwithdrawable";
 
-    private static Connection hbaseConn = null;
-    private static Table table = null;
-    private static Admin hbaseAdmin = null;
+	private static Connection hbaseConn = null;
+	private static Table table = null;
+	private static Admin hbaseAdmin = null;
 
-    public static void main(String[] args) {
-        connectHbase();
+	public static void main(String[] args) {
+		connectHbase();
 
 //		scanAllRows();
 //		filterOnUserIdUsingScan();
 //		filterOnRowKeyUsingGet();
-        filterOnRowKeyPrefixUsingScan();
-    }
+		filterOnRowKeyPrefixUsingScan();
+	}
 
+	private static void connectHbase() {
+		Configuration hbaseConf = HBaseConfiguration.create();
 
-    private static void connectHbase() {
-        Configuration hbaseConf = HBaseConfiguration.create();
+		hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_QUORUM, hbaseZookeeeperHost);
+		hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT, hbaseZookeeeperPort);
+		hbaseConf.set(HBASE_CONFIGURATION_CLIENT_SCANNER_CACHING, hbaseClientScannerCaching);
 
-        hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_QUORUM, hbaseZookeeeperHost);
-        hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT, hbaseZookeeeperPort);
-        hbaseConf.set(HBASE_CONFIGURATION_CLIENT_SCANNER_CACHING, hbaseClientScannerCaching);
-
-        // Increase RPC timeout, in case of a slow computation
+		// Increase RPC timeout, in case of a slow computation
 //        customConf.setLong("hbase.rpc.timeout", 600000);
 
-        try {
-            HBaseAdmin.available(hbaseConf);
+		try {
+			HBaseAdmin.available(hbaseConf);
 
-            hbaseConn = ConnectionFactory.createConnection(hbaseConf);
-            hbaseAdmin = hbaseConn.getAdmin();
-            table = hbaseConn.getTable(TableName.valueOf(tablename));
+			hbaseConn = ConnectionFactory.createConnection(hbaseConf);
+			hbaseAdmin = hbaseConn.getAdmin();
+			table = hbaseConn.getTable(TableName.valueOf(tablename));
 
-            System.out.println("Master Server Name: " + hbaseAdmin.getMaster());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+			System.out.println("Master Server Name: " + hbaseAdmin.getMaster());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-    }
+	}
 
-    private static void filterOnUserIdUsingScan() {
-        // Scanning the table.
-        Scan scan = new Scan();
-        scan.addColumn(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"));
-        scan.addColumn(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"));
+	private static void filterOnUserIdUsingScan() {
+		// Scanning the table.
+		Scan scan = new Scan();
+		scan.addColumn(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"));
+		scan.addColumn(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"));
 
-        Filter userIdFilter = new SingleColumnValueFilter(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"),
-                CompareOp.EQUAL, Bytes.toBytes(228549));
+		Filter userIdFilter = new SingleColumnValueFilter(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"),
+				CompareOp.EQUAL, Bytes.toBytes(228549));
 
-        scan.setFilter(userIdFilter);
-        ResultScanner result;
-        try {
-            long startEpoch = Instant.now().toEpochMilli();
-            System.out.println("Profile started: " + startEpoch);
+		scan.setFilter(userIdFilter);
+		ResultScanner result;
+		try {
+			long startEpoch = Instant.now().toEpochMilli();
+			System.out.println("Profile started: " + startEpoch);
 
-            result = table.getScanner(scan);
+			result = table.getScanner(scan);
 
-            for (Result res : result) {
-                String rowKey = Bytes.toString(res.getRow());
-                int userId = Bytes.toInt(res.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
-                double txnAmount = Bytes
-                        .toDouble(res.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
+			for (Result res : result) {
+				String rowKey = Bytes.toString(res.getRow());
+				int userId = Bytes.toInt(res.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
+				double txnAmount = Bytes
+						.toDouble(res.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
 
-                System.out.println("RowKey: " + rowKey + " User Id: " + userId + " Txn Amount: " + txnAmount);
-            }
+				System.out.println("RowKey: " + rowKey + " User Id: " + userId + " Txn Amount: " + txnAmount);
+			}
 
-            long endEpoch = Instant.now().toEpochMilli();
-            System.out.println("Profile ended: " + endEpoch);
+			long endEpoch = Instant.now().toEpochMilli();
+			System.out.println("Profile ended: " + endEpoch);
 
-            System.out.println("Total Milliseconds: " + (endEpoch - startEpoch));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+			System.out.println("Total Milliseconds: " + (endEpoch - startEpoch));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-    }
+	}
 
-    private static void scanAllRows() {
-        // Scanning the table.
-        Scan scan = new Scan();
-        scan.addColumn(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"));
-        scan.addColumn(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"));
+	private static void scanAllRows() {
+		// Scanning the table.
+		Scan scan = new Scan();
+		scan.addColumn(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"));
+		scan.addColumn(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"));
 
-        ResultScanner scanner = null;
+		ResultScanner scanner = null;
 
-        try {
-            scanner = table.getScanner(scan);
+		try {
+			scanner = table.getScanner(scan);
 
-            for (Result result : scanner) {
+			for (Result result : scanner) {
 //				System.out.println("Found Row: " + result);
-                System.out.println(
-                        "userId: " + Bytes.toInt(result.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")))
-                                + " txnAmount: " + Bytes.toDouble(
-                                result.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"))));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (scanner != null) {
-                scanner.close();
-            }
+				System.out.println(
+						"userId: " + Bytes.toInt(result.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")))
+								+ " txnAmount: " + Bytes.toDouble(
+										result.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"))));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (scanner != null) {
+				scanner.close();
+			}
 
-        }
+		}
 
-    }
+	}
 
-    private static void filterOnRowKeyPrefixUsingScan() {
-        // Scanning the table.
-        Scan scan = new Scan();
+	private static void filterOnRowKeyPrefixUsingScan() {
+		// Scanning the table.
+		Scan scan = new Scan();
 
-        scan.setBatch(100);
+		scan.setBatch(100000);
 
-        scan.addColumn(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"));
-        scan.addColumn(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"));
+		scan.addColumn(Bytes.toBytes("userinfo"), Bytes.toBytes("userId"));
+		scan.addColumn(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount"));
 
-        scan.withStartRow(Bytes.toBytes("228549_"));
+		scan.setRowPrefixFilter(Bytes.toBytes("228549_"));
 
-        ResultScanner result;
-        try {
-            long startEpoch = Instant.now().toEpochMilli();
-            System.out.println("Profile started: " + startEpoch);
+//        scan.withStopRow("91_");
+//        Filter filter = new PrefixFilter(Bytes.toBytes("91_"));
+//        scan.setFilter(filter);
 
-            result = table.getScanner(scan);
+		ResultScanner result;
+		try {
+			long startEpoch = Instant.now().toEpochMilli();
+			System.out.println("Profile started: " + startEpoch);
 
-            int resultCount = 0;
-            for (Result res : result) {
-                String rowKey = Bytes.toString(res.getRow());
-                int userId = Bytes.toInt(res.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
-                double txnAmount = Bytes
-                        .toDouble(res.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
+			result = table.getScanner(scan);
 
-                System.out.println("Count: " + ++resultCount + " RowKey: " + rowKey + " User Id: " + userId + " Txn Amount: " + txnAmount);
-            }
+			int resultCount = 0;
+			for (Result res : result) {
+				String rowKey = Bytes.toString(res.getRow());
+				int userId = Bytes.toInt(res.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
+				double txnAmount = Bytes
+						.toDouble(res.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
 
-            long endEpoch = Instant.now().toEpochMilli();
-            System.out.println("Profile ended: " + endEpoch);
+				System.out.println("Count: " + ++resultCount + " RowKey: " + rowKey + " User Id: " + userId
+						+ " Txn Amount: " + txnAmount);
 
-            System.out.println("Total Milliseconds: " + (endEpoch - startEpoch));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
+                if (userId != 10) {
+                    break;
+                }
 
-    private static void filterOnRowKeyUsingGet() {
-        Get get = new Get(Bytes.toBytes("9_1549454232460_4"));
+			}
 
-        Result result;
-        try {
-            long startEpoch = Instant.now().toEpochMilli();
-            System.out.println("Profile started: " + startEpoch);
+			long endEpoch = Instant.now().toEpochMilli();
+			System.out.println("Profile ended: " + endEpoch);
 
-            result = table.get(get);
+			System.out.println("Total Milliseconds: " + (endEpoch - startEpoch));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
-            byte[] row = result.getRow();
-            if (row == null) {
-                System.out.println("Did not get any row.");
-                return;
-            }
+	private static void filterOnRowKeyUsingGet() {
+		Get get = new Get(Bytes.toBytes("9_1549454232460_4"));
 
+		Result result;
+		try {
+			long startEpoch = Instant.now().toEpochMilli();
+			System.out.println("Profile started: " + startEpoch);
 
-            int userId = Bytes.toInt(result.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
-            double txnAmount = Bytes
-                    .toDouble(result.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
+			result = table.get(get);
 
-            System.out.println("User Id: " + userId + " Txn Amount: " + txnAmount);
+			byte[] row = result.getRow();
+			if (row == null) {
+				System.out.println("Did not get any row.");
+				return;
+			}
 
-            long endEpoch = Instant.now().toEpochMilli();
-            System.out.println("Profile ended: " + endEpoch);
+			int userId = Bytes.toInt(result.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
+			double txnAmount = Bytes
+					.toDouble(result.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
 
-            System.out.println("Total Milliseconds: " + (endEpoch - startEpoch));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+			System.out.println("User Id: " + userId + " Txn Amount: " + txnAmount);
 
-    }
+			long endEpoch = Instant.now().toEpochMilli();
+			System.out.println("Profile ended: " + endEpoch);
+
+			System.out.println("Total Milliseconds: " + (endEpoch - startEpoch));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
 
 }
