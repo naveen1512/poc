@@ -42,7 +42,7 @@ public class ProduceCurrentWithdrawableEventsThread implements Runnable {
 		this.hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_QUORUM, hbaseZookeeeperHost);
 		this.hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT, hbaseZookeeeperPort);
 
-		HBaseAdmin.available(hbaseConf);
+//		HBaseAdmin.available(hbaseConf);
 
 		this.hbaseConn = ConnectionFactory.createConnection(hbaseConf);
 		this.table = hbaseConn.getTable(TableName.valueOf(tablename));

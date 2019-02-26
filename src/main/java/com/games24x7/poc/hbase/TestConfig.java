@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.client.TableDescriptor;
+//import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class TestConfig {
@@ -40,13 +40,13 @@ public class TestConfig {
 		hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_QUORUM, hbaseZookeeeperHost);
 		hbaseConf.set(HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT, hbaseZookeeeperPort);
 
-		HBaseAdmin.available(hbaseConf);
+//		HBaseAdmin.available(hbaseConf);
 
 		Connection hbaseConn = ConnectionFactory.createConnection(hbaseConf);
 		Admin hbaseAdmin = hbaseConn.getAdmin();
 		Table table = hbaseConn.getTable(TableName.valueOf(tablename));
 
-		System.out.println("Master Server Name: " + hbaseAdmin.getMaster());
+//		System.out.println("Master Server Name: " + hbaseAdmin.getMaster());
 
 		// All table description
 //		List<TableDescriptor> tableList = hbaseAdmin.listTableDescriptors();
