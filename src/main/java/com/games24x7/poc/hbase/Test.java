@@ -38,6 +38,7 @@ public class Test {
 //        System.out.println("long as string length: " + sb.length);    // returns 10
 
         System.out.println(new Random().nextInt(100));
+        System.out.println("Naveen");
     }
 
     public static long getRandom(int max) {

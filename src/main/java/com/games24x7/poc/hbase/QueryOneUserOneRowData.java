@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.hadoop.conf.Configuration;
 //import org.apache.hadoop.hbase.CompareOperator;
@@ -46,28 +47,35 @@ public class QueryOneUserOneRowData {
 	private static final String HBASE_CONFIGURATION_RPC_TIMEOUT = "hbase.rpc.timeout";
 	private static final String HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD = "hbase.client.scanner.timeout.period";
 
-	private static final String hbaseZookeeeperHost = "localhost";
+	private static final String hbaseZookeeeperHost = "master-slave-0";
 	private static final String hbaseZookeeeperPort = "2181";
 	private static final long hbaseClientScannerCaching = 1000;
-	private static final long hbaseRPCTimeout = 1200000; // default is 60 seconds
+	private static final long hbaseRPCTimeout = 2400000; // default is 60 seconds
 	private static final long hbaseClientScannerTimeoutPeriod = 2400000;
 
-	private static final String tablename = "userattributes";
+	private static final String tablename = "userattribute";
 
 	private static Connection hbaseConn = null;
 	private static Table table = null;
 	private static Admin hbaseAdmin = null;
 	private static AggregationClient aggregationClient = null;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		Logger.getRootLogger().setLevel(Level.DEBUG);
 
 		connectHbase();
 
 //		scanAllRows();
+//		TimeUnit.SECONDS.sleep(30);
+
 //		rangeQuery();
+//		TimeUnit.SECONDS.sleep(30);
+
 		countAggregation();
+//		TimeUnit.SECONDS.sleep(30);
+
 //		multiThreadedFilterOnRowKeyPrefixUsingScan();
+//		TimeUnit.SECONDS.sleep(30);
 	}
 
 	private static void connectHbase() {
@@ -124,17 +132,17 @@ public class QueryOneUserOneRowData {
 
 			for (Result result : scanner) {
 
-//				System.out.println("id: " + Bytes.toString(result.getRow()) + " name: "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("name"))) + " State: "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("state"))) + " lcount: "
-//						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("lcount")))
-//						+ " frstCshGmTblSz: "
-//						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("frstCshGmTblSz"))) + " "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key4"))) + " "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key5"))) + " "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key13"))) + " "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key19"))) + " "
-//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key16"))));
+				System.out.println("id: " + Bytes.toString(result.getRow()) + " name: "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("name"))) + " State: "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("state"))) + " lcount: "
+						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("lcount")))
+						+ " frstCshGmTblSz: "
+						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("frstCshGmTblSz"))) + " "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key4"))) + " "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key5"))) + " "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key13"))) + " "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key19"))) + " "
+						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key16"))));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -147,6 +155,7 @@ public class QueryOneUserOneRowData {
 
 		long endEpoch = Instant.now().toEpochMilli();
 
+		System.out.println("Full scan without filter -");
 		System.out.println(
 				"Thread " + Thread.currentThread().getId() + " Total Milliseconds: " + (endEpoch - startEpoch));
 
@@ -174,7 +183,7 @@ public class QueryOneUserOneRowData {
 		filterList.addFilter(filter1);
 
 		SingleColumnValueFilter filter2 = new SingleColumnValueFilter(Bytes.toBytes("cf"), Bytes.toBytes("lcount"),
-				CompareOp.LESS_OR_EQUAL, Bytes.toBytes(10));
+				CompareOp.LESS_OR_EQUAL, Bytes.toBytes(50));
 		filter2.setFilterIfMissing(true);
 		filterList.addFilter(filter2);
 
@@ -228,15 +237,15 @@ public class QueryOneUserOneRowData {
 
 //				System.out.println(Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("lcount"))));
 
-				System.out.println("id: " + Bytes.toString(result.getRow()) + " lcount: "
-						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("lcount")))
-						+ " frstCshGmTblSz: "
-						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("frstCshGmTblSz"))) + " "
-						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key4"))) + " "
-						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key5"))) + " "
-						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key13"))) + " "
-						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key19"))) + " "
-						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key16"))));
+//				System.out.println("id: " + Bytes.toString(result.getRow()) + " lcount: "
+//						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("lcount")))
+//						+ " frstCshGmTblSz: "
+//						+ Bytes.toInt(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("frstCshGmTblSz"))) + " "
+//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key4"))) + " "
+//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key5"))) + " "
+//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key13"))) + " "
+//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key19"))) + " "
+//						+ Bytes.toString(result.getValue(Bytes.toBytes("cf"), Bytes.toBytes("key16"))));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -249,6 +258,7 @@ public class QueryOneUserOneRowData {
 
 		long endEpoch = Instant.now().toEpochMilli();
 
+		System.out.println("Range based filter -");
 		System.out.println("Thread " + Thread.currentThread().getId() + " Total Milliseconds: "
 				+ (endEpoch - startEpoch) + " Count: " + count);
 
@@ -324,6 +334,7 @@ public class QueryOneUserOneRowData {
 
 			long endEpoch = Instant.now().toEpochMilli();
 
+			System.out.println("Count aggregation -");
 			System.out.println(
 					"Thread " + Thread.currentThread().getId() + " Total Milliseconds: " + (endEpoch - startEpoch));
 			System.out.println("Total row count: " + rowCount);

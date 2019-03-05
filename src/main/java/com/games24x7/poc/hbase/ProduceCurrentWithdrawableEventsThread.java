@@ -22,7 +22,7 @@ public class ProduceCurrentWithdrawableEventsThread implements Runnable {
 	private final String HBASE_CONFIGURATION_ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
 	private final String HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
 
-	private final String hbaseZookeeeperHost = "localhost";
+	private final String hbaseZookeeeperHost = "master-slave-0";
 	private final String hbaseZookeeeperPort = "2181";
 
 	private final String tablename = "currentwithdrawable";
@@ -51,13 +51,15 @@ public class ProduceCurrentWithdrawableEventsThread implements Runnable {
 	public void run() {
 
 		int userIdMax = 1000000;
-		int userIdCurr = 1;
-		long rowKeyMax = Long.MAX_VALUE;
+		int userIdCurr = 228549;//1;
+		long rowKeyMax = 200000;//Long.MAX_VALUE;
+
+		long startEpoch = Instant.now().toEpochMilli();
 
 		// Insertion of data
 		for (long idx = 0; idx < rowKeyMax; idx++) {
 			Random r = new Random();
-			String rowKey = userIdCurr + "_" + Instant.now().toEpochMilli() + "_" + this.threadId;
+			String rowKey = userIdCurr + "_" + Instant.now().toEpochMilli() + "_" + this.threadId + "_ab";
 			String[] paymentModeOptions = { "UPI", "CreditCard", "DebitCard", "NetBanking", "MobileWallet" };
 
 			Put put = new Put(Bytes.toBytes(rowKey));
@@ -108,16 +110,19 @@ public class ProduceCurrentWithdrawableEventsThread implements Runnable {
 				e.printStackTrace();
 			}
 
-			System.out.println(
-					"Thread ID:" + Thread.currentThread().getId() + " RowKey: " + rowKey + " UserId: " + userIdCurr);
+			System.out.println(" RowKey: " + rowKey + " UserId: " + userIdCurr);
 
-			userIdCurr++;
+//			userIdCurr++;
 
 			// Reset the userId
 			if (userIdCurr == userIdMax) {
 				userIdCurr = 1;
 			}
 		}
+
+		long endEpoch = Instant.now().toEpochMilli();
+
+		System.out.println("Thread ID:" + this.threadId + " Total Milliseconds: " + (endEpoch - startEpoch));
 
 	}
 

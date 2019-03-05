@@ -9,16 +9,17 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Random;
 
 public class ProduceOneUserOneRowDataThread implements Runnable {
 	private final String HBASE_CONFIGURATION_ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
 	private final String HBASE_CONFIGURATION_ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
 
-	private final String hbaseZookeeeperHost = "localhost";
+	private final String hbaseZookeeeperHost = "10.14.24.70";
 	private final String hbaseZookeeeperPort = "2181";
 
-	private final String tablename = "userattributes";
+	private final String tablename = "userattribute";
 
 	private Connection hbaseConn;
 	private Table table;
@@ -52,14 +53,15 @@ public class ProduceOneUserOneRowDataThread implements Runnable {
 	}
 
 	public void run() {
+		long startEpoch = Instant.now().toEpochMilli();
+
 		for (; this.startUser <= this.endUser; this.startUser++) {
 			String rowKey = "" + this.startUser;
 
 			Put put = new Put(Bytes.toBytes(rowKey));
 
 			put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("name"), Bytes.toBytes("User " + rowKey));
-			put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("email"),
-					Bytes.toBytes("User" + rowKey + "@example.com"));
+			put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("email"), Bytes.toBytes("User" + rowKey + "@example.com"));
 			put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("lid"), Bytes.toBytes("User" + rowKey));
 			put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("lcount"), Bytes.toBytes(new Random().nextInt(100)));
 			put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("frstCshGmTblSz"), Bytes.toBytes(new Random().nextInt(6)));
@@ -89,8 +91,13 @@ public class ProduceOneUserOneRowDataThread implements Runnable {
 				e.printStackTrace();
 			}
 
-			System.out.println("Thread ID:" + this.threadId + " RowKey: " + rowKey);
+			System.out.println("RowKey: " + rowKey);
 		}
+
+		long endEpoch = Instant.now().toEpochMilli();
+
+		System.out.println("Thread ID:" + this.threadId + " Total Milliseconds: " + (endEpoch - startEpoch));
+
 	}
 
 	public static long getRandom(int max) {

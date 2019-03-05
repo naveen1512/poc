@@ -3,9 +3,9 @@ package com.games24x7.poc.hbase;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class ProduceCurrentWithdrawableEvents {
+public class ProduceCurrentWithdrawableEventsCopy {
 	public static void main(String[] args) {
-		int threadCount = 1;
+		int threadCount = 4;
 
 		try {
 			ThreadPoolExecutor pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
