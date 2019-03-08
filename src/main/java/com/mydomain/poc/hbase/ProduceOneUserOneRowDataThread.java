@@ -1,4 +1,4 @@
-package com.games24x7.poc.hbase;
+package com.mydomain.poc.hbase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

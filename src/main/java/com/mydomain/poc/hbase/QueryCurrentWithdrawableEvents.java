@@ -1,4 +1,4 @@
-package com.games24x7.poc.hbase;
+package com.mydomain.poc.hbase;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -61,9 +61,9 @@ public class QueryCurrentWithdrawableEvents {
 //		filterOnUserIdUsingScan();
 //		filterOnRowKeyUsingGet();
 //		filterOnRowKeyPrefixUsingScan();
-//		multiThreadedFilterOnRowKeyPrefixUsingScan();
+		multiThreadedFilterOnRowKeyPrefixUsingScan();
 
-		bulkDelete();
+//		bulkDelete();
 	}
 
 	private static void connectHbase() {
@@ -212,7 +212,7 @@ public class QueryCurrentWithdrawableEvents {
 //				int userId = Bytes.toInt(res.getValue(Bytes.toBytes("userinfo"), Bytes.toBytes("userId")));
 //				double txnAmount = Bytes
 //						.toDouble(res.getValue(Bytes.toBytes("transactioninfo"), Bytes.toBytes("txnAmount")));
-
+//
 //				System.out.println("Count: " + resultCount + " RowKey: " + rowKey + " User Id: " + userId
 //						+ " Txn Amount: " + txnAmount);
 
@@ -231,7 +231,7 @@ public class QueryCurrentWithdrawableEvents {
 			e.printStackTrace();
 		}
 
-		TimeUnit.SECONDS.sleep(30);
+//		TimeUnit.SECONDS.sleep(2);
 	}
 
 	private static void multiThreadedFilterOnRowKeyPrefixUsingScan() {

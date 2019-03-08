@@ -1,4 +1,4 @@
-package com.games24x7.poc.hbase;
+package com.mydomain.poc.hbase;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;

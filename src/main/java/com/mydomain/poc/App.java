@@ -1,4 +1,4 @@
-package com.games24x7.poc;
+package com.mydomain.poc;
 
 /**
  * Hello world!

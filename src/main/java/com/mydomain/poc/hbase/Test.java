@@ -1,4 +1,4 @@
-package com.games24x7.poc.hbase;
+package com.mydomain.poc.hbase;
 
 import java.nio.charset.Charset;
 import java.time.Instant;

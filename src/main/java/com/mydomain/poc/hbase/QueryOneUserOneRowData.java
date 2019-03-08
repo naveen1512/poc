@@ -1,4 +1,4 @@
-package com.games24x7.poc.hbase;
+package com.mydomain.poc.hbase;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -22,7 +22,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.client.coprocessor.AggregationClient;
+//import org.apache.hadoop.hbase.client.coprocessor.AggregationClient;
 import org.apache.hadoop.hbase.client.coprocessor.LongColumnInterpreter;
 import org.apache.hadoop.hbase.coprocessor.ColumnInterpreter;
 import org.apache.hadoop.hbase.filter.ColumnRangeFilter;
@@ -58,7 +58,7 @@ public class QueryOneUserOneRowData {
 	private static Connection hbaseConn = null;
 	private static Table table = null;
 	private static Admin hbaseAdmin = null;
-	private static AggregationClient aggregationClient = null;
+//	private static AggregationClient aggregationClient = null;
 
 	public static void main(String[] args) throws InterruptedException {
 		Logger.getRootLogger().setLevel(Level.DEBUG);
@@ -71,11 +71,11 @@ public class QueryOneUserOneRowData {
 //		rangeQuery();
 //		TimeUnit.SECONDS.sleep(30);
 
-		countAggregation();
+//		countAggregation();
 //		TimeUnit.SECONDS.sleep(30);
 
-//		multiThreadedFilterOnRowKeyPrefixUsingScan();
-//		TimeUnit.SECONDS.sleep(30);
+		multiThreadedRangeQuery();
+		TimeUnit.SECONDS.sleep(10);
 	}
 
 	private static void connectHbase() {
@@ -86,7 +86,10 @@ public class QueryOneUserOneRowData {
 		hbaseConf.setLong(HBASE_CONFIGURATION_CLIENT_SCANNER_CACHING, hbaseClientScannerCaching);
 		hbaseConf.setLong(HBASE_CONFIGURATION_RPC_TIMEOUT, hbaseRPCTimeout);
 		hbaseConf.setLong(HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, hbaseClientScannerTimeoutPeriod);
+//		hbaseConf.setInt("hbase.regionserver.handler.count", 25);
 
+//		System.out.println("hbase.regionserver.handler.count - " + hbaseConf.get("hbase.regionserver.handler.count"));
+//		System.out.println("hbase.hregion.max.filesize - " + hbaseConf.get("hbase.hregion.max.filesize"));
 //		System.out.println("hbase.rpc.timeout - " + hbaseConf.get("hbase.rpc.timeout"));
 //		System.out.println(
 //				"hbase.client.scanner.timeout.period - " + hbaseConf.get("hbase.client.scanner.timeout.period"));
@@ -98,7 +101,7 @@ public class QueryOneUserOneRowData {
 			hbaseAdmin = hbaseConn.getAdmin();
 			table = hbaseConn.getTable(TableName.valueOf(tablename));
 
-			aggregationClient = new AggregationClient(hbaseConf);
+//			aggregationClient = new AggregationClient(hbaseConf);
 
 //			System.out.println("Master Server Name: " + hbaseAdmin.getMaster());
 		} catch (Exception e) {
@@ -165,7 +168,13 @@ public class QueryOneUserOneRowData {
 		// Scanning the table.
 		Scan scan = new Scan();
 
+		scan.setCacheBlocks(false); // Default is true
+		scan.setAsyncPrefetch(true);
+		scan.setCaching(1000);
+
 //		scan.setBatch(10000);
+		
+//		System.out.println("getMaxResultSize - " + scan.getMaxResultSize());
 
 		scan.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("lcount"));
 		scan.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("frstCshGmTblSz"));
@@ -330,7 +339,8 @@ public class QueryOneUserOneRowData {
 
 			ColumnInterpreter ci = new LongColumnInterpreter();
 
-			long rowCount = aggregationClient.rowCount(table, ci, scan);
+			long rowCount = 0;
+//			rowCount = aggregationClient.rowCount(tablename.getBytes(), ci, scan);
 
 			long endEpoch = Instant.now().toEpochMilli();
 
@@ -345,8 +355,8 @@ public class QueryOneUserOneRowData {
 
 	}
 
-	private static void multiThreadedFilterOnRowKeyPrefixUsingScan() {
-		int threadCount = 2;
+	private static void multiThreadedRangeQuery() {
+		int threadCount = 1;
 
 		try {
 			ThreadPoolExecutor pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threadCount);
@@ -355,7 +365,7 @@ public class QueryOneUserOneRowData {
 				pool.execute(new Thread() {
 					@Override
 					public void run() {
-
+						rangeQuery();
 					}
 				});
 			}
